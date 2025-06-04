@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分布式系统经典必读论文</title>
+    <style>
+        html {
+            scroll-behavior: smooth; /* 平滑滚动效果 */
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .page-wrapper { /* 新增一个包装器用于flex布局 */
+            display: flex;
+            max-width: 1200px; /* 页面最大宽度 */
+            margin: 20px auto; /* 页面居中，上下边距 */
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+
+        /* 左侧目录样式 */
+        .toc-sidebar {
+            width: 230px; /* 目录宽度 */
+            flex-shrink: 0; /* 防止目录被压缩 */
+            position: sticky; /* 粘性定位 */
+            top: 20px; /* 距离视口顶部距离 */
+            align-self: flex-start; /* 确保在 flex 容器顶部对齐 */
+            height: calc(100vh - 40px); /* 目录高度，减去上下边距 */
+            overflow-y: auto; /* 当内容超出高度时显示滚动条 */
+            background-color: #f8f9fa; /* 目录背景色 */
+            padding: 20px 15px;
+            border-right: 1px solid #dee2e6; /* 右边框分割 */
+            border-top-left-radius: 8px; /* 配合page-wrapper圆角 */
+            border-bottom-left-radius: 8px;
+        }
+        .toc-sidebar h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #343a40;
+            font-size: 1.15em;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ced4da;
+        }
+        .toc-sidebar ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .toc-sidebar ul li a {
+            display: block; /* 让链接充满li */
+            text-decoration: none;
+            color: #007bff;
+            padding: 8px 10px;
+            border-radius: 4px;
+            margin-bottom: 6px; /* 链接间距 */
+            transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 0.9em;
+        }
+        .toc-sidebar ul li a:hover,
+        .toc-sidebar ul li a.active { /* 可以用JS添加active类来高亮当前章节 */
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex-grow: 1; /* 占据剩余空间 */
+            padding: 25px 30px; /* 内容区域内边距 */
+            min-width: 0; /* 防止flex子项溢出问题 */
+        }
+        .main-content h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-top: 0; /* 移到main-content后调整 */
+            margin-bottom: 35px;
+            font-size: 2em;
+        }
+        h2 { /* Section titles */
+            color: #3498db;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 12px;
+            margin-top: 45px; /* 调整章节标题的上边距，第一个可小一些 */
+            font-size: 1.6em;
+            scroll-margin-top: 20px; /* 为粘性导航目标添加顶部偏移 */
+        }
+        .category-section:first-of-type h2 {
+             margin-top: 10px; /* 第一个章节标题的上边距可以小一些 */
+        }
+        h3 { /* Paper titles */
+            color: #2980b9;
+            margin-bottom: 8px;
+            font-size: 1.25em;
+        }
+        /* 保持原有列表项样式 */
+        .main-content ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .main-content li { /* Specificity for paper list items */
+            background-color: #fdfdfe;
+            margin-bottom: 25px;
+            padding: 20px;
+            border-left: 5px solid #3498db;
+            border-radius: 6px;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .main-content li:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .main-content li p {
+            margin-top: 8px;
+            font-size: 0.98em;
+            color: #55595c;
+        }
+        /* 保持原有链接和元信息样式 */
+        .main-content a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        .main-content a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+        .paper-meta {
+            margin-top: 10px;
+        }
+        .paper-meta a {
+            font-size: 0.9em;
+            background-color: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #495057;
+        }
+        .paper-meta a:hover {
+            background-color: #dde2e6;
+            text-decoration: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px 0; /* 调整页脚padding */
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* 响应式调整：小屏幕下目录回到顶部 */
+        @media (max-width: 768px) {
+            .page-wrapper {
+                flex-direction: column;
+            }
+            .toc-sidebar {
+                width: auto; /* 宽度自适应 */
+                position: static; /* 取消粘性定位 */
+                height: auto; /* 高度自适应 */
+                overflow-y: visible;
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                margin-right: 0;
+                border-radius: 8px 8px 0 0; /* 调整圆角 */
+                margin-bottom: 20px;
+            }
+            .toc-sidebar ul {
+                display: flex;
+                flex-direction: row; /* 横向排列 */
+                flex-wrap: wrap; /* 允许换行 */
+                gap: 8px;
+            }
+            .toc-sidebar ul li a {
+                margin-bottom: 0; /* 移除底部间距 */
+            }
+            .main-content {
+                padding: 20px; /* 调整小屏幕下的内边距 */
+            }
+            .main-content h1 {
+                font-size: 1.8em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- 左侧目录 Sidebar Table of Contents -->
+        <aside class="toc-sidebar">
+            <h4>目录</h4>
+            <ul>
+                <li><a href="#theory-basics">分布式理论基础</a></li>
+                <li><a href="#consensus-algorithms">分布式一致性算法</a></li>
+                <li><a href="#distributed-data-structures">分布式数据结构</a></li>
+                <li><a href="#systems-in-practice">分布式系统实战</a></li>
+                <li><a href="#how-to-read-papers">如何高效地阅读论文</a></li>
+                <li><a href="#further-study">深入研究</a></li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <h1>分布式系统经典必读论文</h1>
+
+            <!-- 分布式理论基础 -->
+            <div class="category-section" id="theory-basics">
+                <h2>分布式理论基础</h2>
+                <ul>
+                    <li>
+                        <h3 class="paper-title">Time, Clocks, and the Ordering of Events in a Distributed System</h3>
+                        <p class="paper-explanation">Leslie Lamport 的经典论文，引入了逻辑时钟（Lamport Clock）的概念，用于在分布式系统中确定事件的偏序关系。这是理解分布式系统并发控制和一致性的基石。</p>
+                        <div class="paper-meta">
+                            <a href="https://lamport.azurewebsites.net/pubs/time-clocks.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Time%2C+Clocks%2C+and+the+Ordering+of+Events+in+a+Distributed+System" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">The Byzantine Generals Problem</h3>
+                        <p class="paper-explanation">Lamport, Shostak, Pease 提出的著名问题，探讨了在存在恶意节点（拜占庭将军）的情况下，如何让忠诚的节点达成一致。这篇论文奠定了拜占庭容错（BFT）的基础。</p>
+                        <div class="paper-meta">
+                            <a href="https://lamport.azurewebsites.net/pubs/byz.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=The+Byzantine+Generals+Problem" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services</h3>
+                        <p class="paper-explanation">Eric Brewer 提出的 CAP 理论的原始论文（通常以其演讲形式更为人知）。指出在分布式系统中，一致性 (Consistency)、可用性 (Availability) 和分区容错性 (Partition tolerance) 三者不可兼得。</p>
+                        <div class="paper-meta">
+                            <a href="https://users.cs.northwestern.edu/~bnp/classes/cs443-s12/readings/brewer.pdf" target="_blank">[PDF链接 - 早期版本]</a>
+                            <a href="https://scholar.google.com/scholar?q=Brewer%27s+Conjecture+and+the+Feasibility+of+Consistent%2C+Available%2C+Partition-Tolerant+Web+Services" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">CAP Twelve Years Later: How the "Rules" Have Changed</h3>
+                        <p class="paper-explanation">Eric Brewer 对 CAP 理论的后续思考和澄清，强调了在实际系统中如何在 CAP 的约束下进行权衡和设计，并指出现实系统往往在一定程度上牺牲三者之一或在不同情况下有不同的表现。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/" target="_blank">[文章链接 - InfoQ]</a>
+                            <a href="https://scholar.google.com/scholar?q=CAP+Twelve+Years+Later%3A+How+the+%22Rules%22+Have+Changed" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">BASE: An Acid Alternative</h3>
+                        <p class="paper-explanation">讨论了在大型分布式系统中，相对于传统数据库的 ACID 模型，BASE (Basically Available, Soft state, Eventually consistent) 模型作为一种更具伸缩性和可用性的替代方案。</p>
+                        <div class="paper-meta">
+                            <a href="https://queue.acm.org/detail.cfm?id=1394128" target="_blank">[ACM Queue 链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Base%3A+An+Acid+Alternative" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">A Simple Totally Ordered Broadcast Protocol</h3>
+                        <p class="paper-explanation">这篇论文通常指的是可靠的、全序的广播协议，例如基于两阶段提交或 Paxos/Raft 变体的协议，确保消息在分布式系统中的所有进程中以相同的顺序传递。具体论文可能指代多种实现中的一种，如 Isis 系统中的相关工作。</p>
+                        <div class="paper-meta">
+                            <a href="https://scholar.google.com/scholar?q=Simple+Totally+Ordered+Broadcast+Protocol" target="_blank">[Google Scholar - 相关研究]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">Virtual Time and Global States of Distributed Systems</h3>
+                        <p class="paper-explanation">Friedemann Mattern 和 Colin Fidge 等人独立提出的向量时钟（Vector Clock）的概念，是对 Lamport 时钟的扩展，能够捕捉分布式系统中事件的因果关系，从而可以确定全局一致性快照。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.vs.inf.ethz.ch/publ/papers/Fidge_VT_AustCompJ_1988.pdf" target="_blank">[Fidge 论文链接]</a>
+                            <a href="https://courses.cs.washington.edu/courses/cse550/06au/papers/mattern-vtime.pdf" target="_blank">[Mattern 论文链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Virtual+Time+and+Global+States+of+Distributed+Systems" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 分布式一致性算法 -->
+            <div class="category-section" id="consensus-algorithms">
+                <h2>分布式一致性算法</h2>
+                <ul>
+                    <li>
+                        <h3 class="paper-title">A Brief History of Consensus, 2PC and Transaction Commit</h3>
+                        <p class="paper-explanation">探讨了分布式共识问题的历史、两阶段提交（2PC）协议以及事务提交在分布式系统中的演进和挑战。通常指 Butler Lampson 等人的相关工作总结。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2003-96.pdf" target="_blank">[相关技术报告 - Lampson]</a>
+                            <a href="https://scholar.google.com/scholar?q=A+Brief+History+of+Consensus%2C+2PC+and+Transaction+Commit" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Paxos Made Simple</h3>
+                        <p class="paper-explanation">Leslie Lamport 对其 Paxos 共识算法的简化版解释。Paxos 是一种解决分布式系统中如何在异步、可能出现故障的环境下达成一致的协议。</p>
+                        <div class="paper-meta">
+                            <a href="https://lamport.azurewebsites.net/pubs/paxos-simple.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Paxos+Made+Simple" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Paxos Made Practical</h3>
+                        <p class="paper-explanation">探讨了在实际系统中实现和应用 Paxos 算法时遇到的工程挑战和优化方法，使其更具可用性。通常指 Chandra 等人在 Google 的工作。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.utexas.edu/~lorenzo/corsi/cs380d/papers/paxos_made_practical.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Paxos+Made+Practical" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Paxos Made Live: An Engineering Perspective</h3>
+                        <p class="paper-explanation">Google 的 Chubby 锁服务的核心开发者分享了他们在实现和运维 Paxos 过程中的经验和教训，从工程角度深入剖析 Paxos。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/paxos_made_live.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Paxos+Made+Live%3A+An+Engineering+Perspective" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Raft: In Search of an Understandable Consensus Algorithm</h3>
+                        <p class="paper-explanation">Diego Ongaro 和 John Ousterhout 提出的 Raft 共识算法。相比 Paxos，Raft 旨在更易于理解和实现，它将共识问题分解为领导者选举、日志复制和安全性等子问题。</p>
+                        <div class="paper-meta">
+                            <a href="https://raft.github.io/raft.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://raft.github.io/" target="_blank">[Raft官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Raft%3A+In+Search+of+an+Understandable+Consensus+Algorithm" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">ZooKeeper: Wait-Free Coordination for Internet-Scale Systems</h3>
+                        <p class="paper-explanation">介绍了 Apache ZooKeeper，一个为大型分布式系统提供高可用、高性能的协调服务。它使用 Zab (ZooKeeper Atomic Broadcast) 协议，这是一种类似 Paxos 的崩溃恢复原子广播协议。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.usenix.org/legacy/event/atc10/tech/full_papers/Hunt.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://zookeeper.apache.org/" target="_blank">[ZooKeeper官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Zookeeper%3A+Wait-free+Coordination+for+Internet-Scale+Systems" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Using Paxos to Build a Scalable, Consistent, and Highly Available Datastore</h3>
+                        <p class="paper-explanation">探讨如何使用 Paxos 协议构建一个可扩展、一致且高可用的数据存储系统。通常指 Google Megastore 或 Spanner 相关论文中对 Paxos 应用的讨论。</p>
+                        <div class="paper-meta">
+                            <a href="https://scholar.google.com/scholar?q=Using+Paxos+to+Build+Scalable+Consistent+Highly+Available+Datastore" target="_blank">[Google Scholar - 相关研究]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Impossibility of Distributed Consensus With One Faulty Process</h3>
+                        <p class="paper-explanation">Fischer, Lynch, Paterson (FLP) 的著名论文，证明了在异步分布式系统中，即使只有一个进程可能崩溃，也不存在一个确定性的算法能在有限时间内达成共识。这是分布式共识领域一个非常重要的理论结果。</p>
+                        <div class="paper-meta">
+                            <a href="https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Impossibility+of+Distributed+Consensus+With+One+Faulty+Process" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">Consensus in the Presence of Partial Synchrony</h3>
+                        <p class="paper-explanation">Dwork, Lynch, Stockmeyer 的论文，探讨了在部分同步模型（介于完全异步和完全同步之间）下达成共识的可能性和条件。FLP 结果表明纯异步下不可能，这篇论文则研究了放宽异步假设后的情况。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.rice.edu/~scrosby/classes/comp520/papers/dls88.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Consensus+in+the+Presence+of+Partial+Synchrony" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 分布式数据结构 -->
+            <div class="category-section" id="distributed-data-structures">
+                <h2>分布式数据结构</h2>
+                <ul>
+                    <li>
+                        <h3 class="paper-title">Chord: A Scalable Peer-to-Peer Lookup Service for Internet Applications</h3>
+                        <p class="paper-explanation">Chord 是一种经典的分布式散列表（DHT）协议，它提供了一种在 P2P 网络中高效定位资源的方法。节点和键都被映射到一个环形空间，每个节点负责环上的一段区域。</p>
+                        <div class="paper-meta">
+                            <a href="https://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Chord%3A+A+Scalable+Peer-to-Peer+Lookup+Service+for+Internet+Applications" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Pastry: Scalable, Distributed Object Location, and Routing for Large-Scale Peer-to-Peer Systems</h3>
+                        <p class="paper-explanation">Pastry 是另一种著名的 DHT 实现，它使用一种基于前缀匹配的路由算法，并考虑了网络局部性，使得路由更高效。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.rice.edu/~druschel/papers/pastry.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Pastry%3A+Scalable%2C+Distributed+Object+Location%2C+and+Routing+for+Large-Scale+Peer-to-Peer+Systems" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">Kademlia: A Peer-to-Peer Information System Based on the XOR Metric</h3>
+                        <p class="paper-explanation">Kademlia 是一个广泛应用的 DHT 协议，其特点是使用 XOR 距离度量节点间的距离，并具有高效的查找性能和较低的维护开销。许多文件共享系统（如 BitTorrent）都使用了 Kademlia。</p>
+                        <div class="paper-meta">
+                            <a href="https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Kademlia%3A+A+Peer-to-Peer+Information+System+Based+on+the+XOR+Metric" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">A Scalable Content-Addressable Network</h3>
+                        <p class="paper-explanation">CAN (Content-Addressable Network) 是最早提出的 DHT 协议之一。它将键空间划分为一个多维笛卡尔坐标空间，每个节点负责空间中的一个区域。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.cornell.edu/people/ratnasamy/papers/can_sigcomm.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=A+Scalable+Content-Addressable+Network" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Ceph: A Scalable, High-Performance Distributed File System</h3>
+                        <p class="paper-explanation">Ceph 是一个开源的、统一的、高可扩展的分布式存储系统。它提供对象存储、块存储和文件系统接口，其核心是 CRUSH 算法，用于动态地、伪随机地将数据分布到异构的存储设备上。</p>
+                        <div class="paper-meta">
+                            <a href="https://ceph.com/wp-content/uploads/2016/08/weil-ceph-osdi06.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://ceph.io/" target="_blank">[Ceph官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Ceph%3A+A+Scalable%2C+High-Performance+Distributed+File+System" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">The Log-Structured Merge-Tree (LSM-Tree)</h3>
+                        <p class="paper-explanation">LSM-Tree 是一种数据结构，常用于需要高写入吞吐量的存储系统（如 NoSQL 数据库 HBase, Cassandra, LevelDB）。它通过将随机写转换为顺序写来优化写性能，读取时可能需要合并多个层级的数据。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.umb.edu/~poneil/lsmtree.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=The+Log-Structured+Merge-Tree+%28LSM-Tree%29" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">HBase: A NoSQL Database</h3>
+                        <p class="paper-explanation">Apache HBase 是一个开源的、分布式的、非关系型、列式数据库，构建在 HDFS 之上。它借鉴了 Google Bigtable 的设计，适用于海量结构化数据的随机、实时读写访问。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.usenix.org/legacy/event/osdi10/tech/full_papers/Facebook-HBase.pdf" target="_blank">[相关论文 - Facebook's Use of HBase]</a>
+                            <a href="https://hbase.apache.org/" target="_blank">[HBase官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=HBase%3A+A+NoSQL+Database" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Tango: Distributed Data Structure over a Shared Log</h3>
+                        <p class="paper-explanation">Tango 提出了一种基于共享日志构建分布式数据结构的方法，旨在简化高可用、一致的分布式服务的开发。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.usenix.org/system/files/conference/sosp13/sosp13-paper-bacon.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Tango%3A+Distributed+Data+Structure+over+a+Shared+Log" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 分布式系统实战 -->
+            <div class="category-section" id="systems-in-practice">
+                <h2>分布式系统实战</h2>
+                <ul>
+                    <li>
+                        <h3 class="paper-title">The Google File System</h3>
+                        <p class="paper-explanation">Google GFS 是一个为大规模数据密集型应用设计的可扩展的分布式文件系统。它运行在廉价的商用硬件上，并能提供容错能力。其设计思想对后来的 HDFS 等系统产生了深远影响。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/gfs-sosp2003.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=The+Google+File+System" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">BigTable: A Distributed Storage System for Structured Data</h3>
+                        <p class="paper-explanation">Google Bigtable 是一个分布式的、多维稀疏映射表系统，设计用于管理海量的结构化数据。它是许多 Google 服务的底层存储，并启发了 HBase、Cassandra 等众多 NoSQL 数据库的设计。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/bigtable-osdi06.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=BigTable%3A+A+Distributed+Storage+System+for+Structured+Data" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">The Chubby Lock Service for Loosely-Coupled Distributed Systems</h3>
+                        <p class="paper-explanation">Google Chubby 是一个高可用的分布式锁服务，用于在大型松耦合分布式系统中进行协调，如选举主节点、元数据存储等。它基于 Paxos 算法实现。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/chubby-osdi06.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=The+Chubby+Lock+Service+for+Loosely-Coupled+Distributed+Systems" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">Finding a Needle in Haystack: Facebook's Photo Storage</h3>
+                        <p class="paper-explanation">Facebook 描述了其用于存储海量照片的系统 Haystack。该系统针对 Facebook 照片存储的特点（写一次、读多次、很少删除、低延迟）进行了优化，以降低元数据开销和提高 I/O 效率。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.usenix.org/legacy/event/osdi10/tech/full_papers/Beaver.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Finding+a+Needle+in+Haystack%3A+Facebook%27s+Photo+Storage" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Windows Azure Storage: A Highly Available Cloud Storage Service with Strong Consistency</h3>
+                        <p class="paper-explanation">介绍了微软 Azure 云存储服务的设计，该服务提供了高可用性和强一致性的数据存储能力，支持 Blob、Table、Queue 等多种数据抽象。</p>
+                        <div class="paper-meta">
+                            <a href="https://sigops.org/s/conferences/sosp/2011/current/2011-Cascais/printable/11-calder.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Windows+Azure+Storage%3A+A+Highly+Available+Cloud+Storage+Service+with+Strong+Consistency" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Resilient Distributed Datasets: A Fault-Tolerant Abstraction for In-Memory Cluster Computing</h3>
+                        <p class="paper-explanation">Spark 的核心概念 RDD (Resilient Distributed Datasets) 的论文。RDD 是一种容错的、并行的、分布式的内存数据抽象，支持丰富的转换操作和惰性求值，极大地简化了大规模集群计算的编程。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://spark.apache.org/" target="_blank">[Spark官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Resilient+Distributed+Datasets%3A+A+Fault-Tolerant+Abstraction+for+In-Memory+Cluster+Computing" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                     <li>
+                        <h3 class="paper-title">Scaling Distributed Machine Learning with the Parameter Server</h3>
+                        <p class="paper-explanation">参数服务器（Parameter Server）是一种分布式机器学习框架，它通过将模型参数分布在多台服务器上，并提供高效的参数更新和同步机制，来支持大规模机器学习模型的训练。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.cmu.edu/~muli/file/parameter_server_osdi14.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Scaling+Distributed+Machine+Learning+with+the+Parameter+Server" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Dremel: Interactive Analysis of Web-Scale Datasets</h3>
+                        <p class="paper-explanation">Google Dremel 是一种用于对超大规模数据集进行交互式分析的系统。它采用了列式存储和基于树状结构的查询执行引擎，能够在秒级响应对 PB 级别数据的复杂查询。BigQuery 是其公开实现。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/36632.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Dremel%3A+Interactive+Analysis+of+Web-Scale+Datasets" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Pregel: A System for Large-Scale Graph Processing</h3>
+                        <p class="paper-explanation">Google Pregel 是一个用于大规模图计算的分布式计算框架。它采用 Bulk Synchronous Parallel (BSP) 模型，使得程序员可以方便地编写迭代式的图算法。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/36726.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Pregel%3A+A+System+for+Large-Scale+Graph+Processing" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Spanner: Google's Globally-Distributed Database</h3>
+                        <p class="paper-explanation">Google Spanner 是全球分布式的、可扩展的、多版本、同步复制的数据库。它提供了外部一致性（强一致性）的事务，并结合了关系数据库和 NoSQL 数据库的优点。其核心技术是 TrueTime API。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/spanner-osdi2012.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Spanner%3A+Google%27s+Globally-Distributed+Database" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Dynamo: Amazon's Highly Available Key-value Store</h3>
+                        <p class="paper-explanation">Amazon Dynamo 是一个高可用的键值存储系统。它采用了最终一致性模型，并使用向量时钟、Sloppy Quorum、Gossip 协议等技术来实现高可用性和可扩展性。对许多 NoSQL 数据库设计产生了影响。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Dynamo%3A+Amazon%27s+Highly+Available+Key-value+Store" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">S4: Distributed Stream Computing Platform</h3>
+                        <p class="paper-explanation">S4 (Simple Scalable Streaming System) 是 Yahoo! 开发的一个通用的、可扩展的、分布式的流计算平台，用于处理连续的、无界的数据流。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.cornell.edu/~neumat/courses/cs7491/s4_icdm_2011.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=S4%3A+Distributed+Stream+Computing+Platform" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Storm @ Twitter</h3>
+                        <p class="paper-explanation">介绍了 Twitter 如何使用 Apache Storm 进行实时数据处理。Storm 是一个开源的、分布式的、容错的实时计算系统，常用于流处理和持续计算。</p>
+                        <div class="paper-meta">
+                            <a href="https://dl.acm.org/doi/pdf/10.1145/2588555.2595641" target="_blank">[ACM链接 - 可能需订阅]</a>
+                            <a href="https://storm.apache.org/" target="_blank">[Storm官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Storm+%40Twitter" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Large-scale Cluster Management at Google with Borg</h3>
+                        <p class="paper-explanation">Google Borg 是一个大规模集群管理系统，负责调度和管理 Google 数据中心中运行的数百万个作业。它是 Kubernetes 的前身和重要灵感来源。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43438.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Large-scale+Cluster+Management+at+Google+with+Borg" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">F1 - The Fault-Tolerant Distributed RDBMS Supporting Google's Ad Business</h3>
+                        <p class="paper-explanation">Google F1 是一个构建在 Spanner 之上的分布式关系数据库管理系统，专为支持 Google 的广告业务而设计。它提供了强一致性和高可用性，并支持 SQL 查询。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/41344.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=F1+-+The+Fault-Tolerant+Distributed+RDBMS+Supporting+Google%27s+Ad+Business" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Cassandra: A Decentralized Structured Storage System</h3>
+                        <p class="paper-explanation">Apache Cassandra 是一个开源的、分布式的、去中心化的、高可用的 NoSQL 数据库。它结合了 Dynamo 的最终一致性模型和 Bigtable 的数据模型特点。</p>
+                        <div class="paper-meta">
+                            <a href="https://www.cs.cornell.edu/projects/ladis2009/papers/Lakshman-ladis2009.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://cassandra.apache.org/_/index.html" target="_blank">[Cassandra官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Cassandra%3A+A+Decentralized+Structured+Storage+System" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">MegaStore: Providing Scalable, Highly Available Storage for Interactive Services</h3>
+                        <p class="paper-explanation">Google Megastore 是一个构建在 Bigtable 之上的分布式存储系统，旨在为交互式在线服务提供可扩展、高可用的存储，并支持跨数据中心的同步复制和实体组内的 ACID 事务。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/36971.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Megastore%3A+Providing+Scalable%2C+Highly+Available+Storage+for+Interactive+Services" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Dapper, a Large-Scale Distributed Systems Tracing Infrastructure</h3>
+                        <p class="paper-explanation">Google Dapper 是一个大规模分布式系统跟踪基础设施。它用于理解和分析复杂分布式系统中请求的生命周期和性能瓶颈。是许多开源分布式追踪系统（如 Zipkin, Jaeger）的灵感来源。</p>
+                        <div class="paper-meta">
+                            <a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/36356.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://scholar.google.com/scholar?q=Dapper%2C+a+Large-Scale+Distributed+Systems+Tracing+Infrastructure" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Kafka: A distributed Messaging System for Log Processing</h3>
+                        <p class="paper-explanation">Apache Kafka 是一个开源的分布式流处理平台，最初由 LinkedIn 开发。它被设计为一个高吞吐量、可扩展、持久化的发布-订阅消息系统，广泛用于日志聚合、流数据处理等场景。</p>
+                        <div class="paper-meta">
+                            <a href="https://notes.stephenholiday.com/Kafka.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://kafka.apache.org/" target="_blank">[Kafka官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Kafka%3A+A+Distributed+Messaging+System+for+Log+Processing" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                    <li>
+                        <h3 class="paper-title">Amazon Aurora: Design Considerations for High Throughput Cloud-Native Relational Databases</h3>
+                        <p class="paper-explanation">Amazon Aurora 是一个与 MySQL 和 PostgreSQL 兼容的关系数据库，专为云环境设计。它通过将存储和计算分离，并优化日志处理和存储层，实现了高性能、高可用性和可扩展性。</p>
+                        <div class="paper-meta">
+                            <a href="https://assets.amazon.science/c3/cf/3f38a21841119203506b385ffb7a/amazon-aurora-design-considerations-for-high-throughput-cloud-native-relational-databases.pdf" target="_blank">[PDF链接]</a>
+                            <a href="https://aws.amazon.com/rds/aurora/" target="_blank">[Aurora官网]</a>
+                            <a href="https://scholar.google.com/scholar?q=Amazon+Aurora%3A+Design+Considerations+for+High+Throughput+Cloud-Native+Relational+Databases" target="_blank">[Google Scholar]</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 如何高效地读论文 -->
+             <div class="category-section" id="how-to-read-papers">
+                <h2>如何高效地阅读论文</h2>
+                <ul>
+                    <li>
+                        <h3 class="paper-title">阅读方法与技巧</h3>
+                        <p class="paper-explanation">这部分内容源于图片中关于阅读论文的指导思想，并非单指某一篇论文。高效阅读论文通常包括以下步骤：</p>
+                        <p><strong>1. 阅读背景 (Understand Context):</strong> 了解论文所属领域、要解决的问题及其重要性。</p>
+                        <p><strong>2. 浏览摘要、引言和结论 (Skim Abstract, Intro, Conclusion):</strong> 快速把握论文核心思想、贡献和成果。</p>
+                        <p><strong>3. 关注图表和实验结果 (Focus on Figures, Tables, Results):</strong> 图表通常是论文精华的直观展示。</p>
+                        <p><strong>4. 选择性仔细阅读 (Selective Detailed Reading):</strong> 根据自己的需求和对论文的初步判断，选择关键章节（如方法、设计、重要算法）进行细读。</p>
+                        <p><strong>5. 学习评测方法 (Study Evaluation Methods):</strong> 理解作者如何验证其工作的有效性，包括实验设置、数据集、对比方法和衡量指标。</p>
+                        <p><strong>6. 批判性思考 (Critical Thinking):</strong> 思考论文的优点、缺点、潜在问题以及可以改进的地方。</p>
+                        <p><strong>7. 记录和总结 (Take Notes and Summarize):</strong> 用自己的话总结论文核心内容，有助于加深理解和记忆。</p>
+                        <div class="paper-meta">
+                             <a href="https://web.stanford.edu/class/ee384m/Handouts/HowtoReadPaper.pdf" target="_blank">[S. Keshav - How to Read a Paper]</a>
+                             <a href="https://scholar.google.com/scholar?q=how+to+read+a+computer+science+paper" target="_blank">[Google Scholar - 相关搜索]</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 深入研究 -->
+            <div class="category-section" id="further-study">
+                <h2>深入研究</h2>
+                <ul>
+                     <li>
+                        <h3 class="paper-title">持续学习与探索</h3>
+                        <p class="paper-explanation">在掌握了这些经典论文的基础上，可以通过以下方式进行深入研究：</p>
+                        <p><strong>1. 跟踪顶级会议和期刊:</strong> 关注分布式系统领域的顶级学术会议（如 SOSP, OSDI, NSDI, EuroSys, PODC, ATC, FAST）和期刊（如 TOCS, TPDS, JACM），了解最新的研究动态和技术趋势。</p>
+                        <p><strong>2. 阅读相关工作和引用文献:</strong> 通过经典论文的参考文献以及引用这些论文的新工作，扩展知识网络。</p>
+                        <p><strong>3. 参与开源项目和社区:</strong> 贡献或学习流行的分布式系统开源项目（如 Kubernetes, Spark, Flink, Ceph, TiDB 等），将理论知识与实践相结合。</p>
+                        <p><strong>4. 关注领域内专家的工作:</strong> 跟踪知名学者和业界专家的博客、演讲和最新发表的论文。</p>
+                        <p><strong>5. 动手实践:</strong> 尝试复现论文中的实验，或者基于论文思想构建自己的小型系统，加深理解。</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer">
+                <p>根据提供的图片资料整理，旨在学习和研究分布式系统。</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
